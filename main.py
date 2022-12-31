@@ -10,6 +10,7 @@ import torch.backends.cudnn as cudnn
 from numpy import random
 
 from emotion import detect_emotion, init
+from emotion import emotions as emt_list
 
 from models.experimental import attempt_load
 from utils.datasets import LoadStreams, LoadImages
@@ -73,6 +74,10 @@ def detect(opt):
 
         # Process detections
         for i, det in enumerate(pred):  # detections per image
+            
+            # unbound local hatası için dirty solution
+            most_frequent = None
+
             if webcam:  # batch_size >= 1
                 p, s, im0, frame = path[i], '%g: ' % i, im0s[i].copy(), dataset.count
             else:
@@ -96,6 +101,13 @@ def detect(opt):
                 
                 if images:
                     emotions = detect_emotion(images,show_conf)
+
+                    # emotions daki emotion miktarını bulup çoğunluk hangisi göstermek için 
+                    unique, count = np.unique(emotions, return_counts=True)
+                    
+                    # index = unique[count.argmax()]
+                    most_frequent = f"Majority is {emt_list[unique[count.argmax()].astype(np.int)]}"
+
                 # Write results
                 i = 0
                 for *xyxy, conf, cls in reversed(det):
@@ -103,6 +115,7 @@ def detect(opt):
                     if view_img or not nosave:  
                         # Add bbox to image with emotions on 
                         label = emotions[i][0]
+
                         colour = colors[emotions[i][1]]
                         i += 1
                         plot_one_box(xyxy, im0, label=label, color=colour, line_thickness=opt.line_thickness)
@@ -111,7 +124,10 @@ def detect(opt):
             # Stream results
             if view_img:
                 display_img = cv2.resize(im0, (im0.shape[1]*2,im0.shape[0]*2))
-                cv2.imshow("Emotion Detection",display_img)
+                # test write to window
+                cv2.putText(display_img, most_frequent, (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 1)
+                cv2.imshow("Emotion Detection", display_img)
+
                 cv2.waitKey(1)  # 1 millisecond
             if not nosave:
                 # check what the output format is

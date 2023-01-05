@@ -8,6 +8,7 @@ import cv2
 import torch
 import torch.backends.cudnn as cudnn
 from numpy import random
+import pyttsx3 as tts
 
 from emotion import detect_emotion, init
 from emotion import emotions as emt_list
@@ -19,6 +20,9 @@ from utils.general import check_img_size, check_requirements, check_imshow, non_
 from utils.plots import plot_one_box
 from utils.torch_utils import select_device, time_synchronized
 
+
+# init tts engine
+engine = tts.init()
 
 def detect(opt):
     source, view_img, imgsz, nosave, show_conf, save_path, show_fps = opt.source, not opt.hide_img, opt.img_size, opt.no_save, not opt.hide_conf, opt.output_path, opt.show_fps
@@ -106,7 +110,7 @@ def detect(opt):
                     unique, count = np.unique(emotions, return_counts=True)
                     
                     # index = unique[count.argmax()]
-                    most_frequent = f"Majority is {emt_list[unique[count.argmax()].astype(np.int)]}"
+                    most_frequent = f"Majority is {emt_list[unique[count.argmax()].astype(int)]}"
 
                 # Write results
                 i = 0
@@ -125,10 +129,17 @@ def detect(opt):
             if view_img:
                 display_img = cv2.resize(im0, (im0.shape[1]*2,im0.shape[0]*2))
                 # test write to window
-                cv2.putText(display_img, most_frequent, (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 1)
+                cv2.putText(display_img, most_frequent, (10,60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 1)
                 cv2.imshow("Emotion Detection", display_img)
+                
+                # say it out loud!
+                tts.speak(most_frequent)
 
                 cv2.waitKey(1)  # 1 millisecond
+
+                # wait for a time to scan in intervals
+                time.sleep(5)
+
             if not nosave:
                 # check what the output format is
                 ext = save_path.split(".")[-1]
@@ -176,7 +187,7 @@ if __name__ == '__main__':
     parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--line-thickness', default=2, type=int, help='bounding box thickness (pixels)')
     parser.add_argument('--hide-conf', default=False, action='store_true', help='hide confidences')
-    parser.add_argument('--show-fps', default=False, action='store_true', help='print fps to console')
+    parser.add_argument('--show-fps', default=True, action='store_true', help='print fps to console')
     opt = parser.parse_args()
     check_requirements(exclude=('pycocotools', 'thop'))
     with torch.no_grad():

@@ -11,6 +11,7 @@ model = create(deploy=True)
 
 # 8 Emotions
 emotions = ("anger","contempt","disgust","fear","happy","neutral","sad","surprise")
+emotionsTR = ("kızgın", "contempt", "iğrenmiş", "korkmuş", "mutlu", "hissiz", "üzgün", "şaşkın")
 
 def init(device):
     # Initialise model
